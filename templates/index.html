@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Anotações dos Cultos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        function confirmarDelecao(event) {
+            if (!confirm("Você tem certeza que deseja deletar esta anotação?")) {
+                event.preventDefault();
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Anotações dos Cultos</h1>
+        <a class="btn" href="{{ url_for('adicionar') }}">Adicionar Nova Anotação</a>
+        <ul class="anotacoes-lista">
+        {% for index, anotacao in enumerate(anotacoes) %}
+            <li class="anotacao-item">
+                <strong>Data:</strong> {{ anotacao.data }}<br>
+                <strong>Tema:</strong> {{ anotacao.tema }}<br>
+                <strong>Passagem Bíblica:</strong> {{ anotacao.passagem_biblica }}<br>
+                <strong>Anotações do Culto:</strong> {{ anotacao.anotacoes_culto }}<br>
+                <strong>Devocional:</strong> {{ anotacao.devocional }}<br>
+                <form action="{{ url_for('deletar', index=index) }}" method="post" style="display:inline;" onsubmit="confirmarDelecao(event)">
+                    <button type="submit" class="btn-delete">Deletar</button>
+                </form>
+            </li>
+        {% endfor %}
+        </ul>
+        <a class="btn" href="{{ url_for('sair') }}">Sair</a>
+    </div>
+</body>
+</html>

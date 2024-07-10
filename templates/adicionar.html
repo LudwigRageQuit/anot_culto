@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Adicionar Anotação</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Adicionar Anotação</h1>
+        <form method="post">
+            <label for="data">Data (DD/MM/AAAA):</label><br>
+            <input type="text" id="data" name="data" required><br>
+            <label for="tema">Tema:</label><br>
+            <input type="text" id="tema" name="tema" required><br>
+            <label for="passagem_biblica">Passagem Bíblica:</label><br>
+            <input type="text" id="passagem_biblica" name="passagem_biblica" required><br>
+            <label for="anotacoes_culto">Anotações do Culto:</label><br>
+            <textarea id="anotacoes_culto" name="anotacoes_culto" required></textarea><br>
+            <label for="devocional">Seu devocional pós-culto:</label><br>
+            <textarea id="devocional" name="devocional" required></textarea><br>
+            <button type="submit" class="btn">Adicionar</button>
+        </form>
+        <a class="btn" href="{{ url_for('index') }}">Voltar</a>
+    </div>
+</body>
+</html>

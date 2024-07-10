@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta.charset="UTF-8">
+    <title>Sair</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <pre>{{ cruz }}</pre>
+        <p>{{ mensagem }}</p>
+        <a class="btn" href="{{ url_for('index') }}">Voltar</a>
+    </div>
+</body>
+</html>
