@@ -1,69 +1,56 @@
-import json
-import os
-import shutil
-import atexit
-from flask import Flask, render_template, request, redirect, url_for, abort
 import argparse
+import os
+import json
+import shutil
 import logging
+import atexit
 from datetime import datetime
+from flask import Flask, render_template, request, redirect, url_for, abort
+from dotenv import load_dotenv
 import dropbox
 
-# Configuração do Dropbox
-DROPBOX_ACCESS_TOKEN = 'sl.B4yE2HS2_bHPLGhsySSiI1abrxFkyTFeWmRYZeYSb-ZiDS9Z0B7gDQVoACeWqQi2kCeaFVhNUKSvZb6kgQQREboWOk18QAsA8hVlTSysaoMYs1oOP578__XbuawuvIqA3kPDYvci8GS-'  # Substitua pelo seu token
+# Carregar variáveis de ambiente do arquivo .env
+load_dotenv()
+
+# Obter o token do Dropbox da variável de ambiente
+DROPBOX_ACCESS_TOKEN = os.getenv('DROPBOX_ACCESS_TOKEN')
+
+if not DROPBOX_ACCESS_TOKEN:
+    raise ValueError("O token de acesso do Dropbox não está definido. Verifique a configuração.")
+
+# Inicializar cliente Dropbox
+dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
+
+app = Flask(__name__)
 
 # Arquivo JSON onde as anotações serão armazenadas
 ANOTACOES_FILE = "anotacoes_culto.json"
-DROPBOX_FILE_PATH = '/anotacoes_culto.json'
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
 
-# Inicializar cliente Dropbox
-def get_dropbox_client():
+# Função para baixar o arquivo JSON do Dropbox
+def baixar_arquivo_do_dropbox():
     try:
-        dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
-        return dbx
-    except Exception as e:
-        logging.error(f"Erro ao inicializar o cliente Dropbox: {e}")
-        return None
-
-# Função para fazer download do arquivo do Dropbox
-def download_file_from_dropbox():
-    dbx = get_dropbox_client()
-    if dbx is None:
-        return
-
-    try:
-        metadata, res = dbx.files_download(path=DROPBOX_FILE_PATH)
+        metadata, res = dbx.files_download(path='/anotacoes_culto.json')
         with open(ANOTACOES_FILE, 'wb') as f:
             f.write(res.content)
-        logging.info("Arquivo baixado do Dropbox com sucesso!")
+        logging.info("Arquivo JSON baixado com sucesso do Dropbox.")
     except dropbox.exceptions.ApiError as e:
         logging.error(f"Erro ao baixar o arquivo do Dropbox: {e}")
 
-# Função para fazer upload do arquivo para o Dropbox
-def upload_file_to_dropbox():
-    dbx = get_dropbox_client()
-    if dbx is None:
-        return
-
+# Função para enviar o arquivo JSON para o Dropbox
+def enviar_arquivo_para_dropbox():
     try:
         with open(ANOTACOES_FILE, 'rb') as f:
-            dbx.files_upload(f.read(), DROPBOX_FILE_PATH, mode=dropbox.files.WriteMode.overwrite)
-        logging.info("Arquivo enviado para o Dropbox com sucesso!")
+            dbx.files_upload(f.read(), path='/anotacoes_culto.json', mode=dropbox.files.WriteMode.overwrite)
+        logging.info("Arquivo JSON enviado para o Dropbox com sucesso.")
     except dropbox.exceptions.ApiError as e:
         logging.error(f"Erro ao enviar o arquivo para o Dropbox: {e}")
 
-# Função para garantir que o arquivo JSON local esteja sincronizado com o Dropbox
-def sincronizar_com_dropbox():
-    # Baixar o arquivo JSON do Dropbox para garantir que estamos usando a versão mais recente
-    download_file_from_dropbox()
-
-# Carregar anotações de um arquivo JSON
+# Função para carregar anotações
 def carregar_anotacoes():
-    sincronizar_com_dropbox()  # Garante que estamos carregando a versão mais recente do Dropbox
     if not os.path.exists(ANOTACOES_FILE):
-        logging.error("Arquivo JSON local não encontrado.")
         return []
     try:
         with open(ANOTACOES_FILE, "r", encoding="utf-8") as f:
@@ -72,16 +59,17 @@ def carregar_anotacoes():
         logging.error("Erro ao decodificar o arquivo JSON.")
         return []
 
-# Salvar anotações em um arquivo JSON
+# Função para salvar anotações
 def salvar_anotacoes(anotacoes):
     try:
         with open(ANOTACOES_FILE, "w", encoding="utf-8") as f:
             json.dump(anotacoes, f, ensure_ascii=False, indent=4)
-        upload_file_to_dropbox()  # Envia as alterações para o Dropbox
+        # Enviar o arquivo atualizado para o Dropbox
+        enviar_arquivo_para_dropbox()
     except IOError:
         logging.error("Erro ao salvar o arquivo JSON.")
 
-# Criar um backup do arquivo JSON
+# Função para criar backup do arquivo JSON
 def criar_backup():
     data_hora = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_file = f"anotacoes_culto_backup_{data_hora}.json"
@@ -94,8 +82,10 @@ def criar_backup():
 # Registrar função de finalização para criar backup
 atexit.register(criar_backup)
 
-# Inicializar a aplicação Flask
-app = Flask(__name__)
+@app.before_first_request
+def sincronizar_arquivo():
+    """Baixar o arquivo do Dropbox antes de processar a primeira solicitação."""
+    baixar_arquivo_do_dropbox()
 
 @app.route('/')
 def index():
