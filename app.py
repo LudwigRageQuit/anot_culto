@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, abort
 import argparse
 import logging
 from datetime import datetime
+from urllib.parse import quote as url_quote
 
 app = Flask(__name__)
 
