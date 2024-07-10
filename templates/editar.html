@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Anotação</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Editar Anotação</h1>
+        <form action="{{ url_for('editar', index=index) }}" method="post">
+            <label for="data">Data:</label>
+            <input type="text" id="data" name="data" value="{{ anotacao.data }}" required>
+            
+            <label for="tema">Tema:</label>
+            <input type="text" id="tema" name="tema" value="{{ anotacao.tema }}" required>
+            
+            <label for="passagem_biblica">Passagem Bíblica:</label>
+            <input type="text" id="passagem_biblica" name="passagem_biblica" value="{{ anotacao.passagem_biblica }}" required>
+            
+            <label for="anotacoes_culto">Anotações do Culto:</label>
+            <textarea id="anotacoes_culto" name="anotacoes_culto" required>{{ anotacao.anotacoes_culto }}</textarea>
+            
+            <label for="devocional">Devocional:</label>
+            <textarea id="devocional" name="devocional" required>{{ anotacao.devocional }}</textarea>
+            
+            <button type="submit" class="btn">Salvar Alterações</button>
+            <a class="btn" href="{{ url_for('index') }}">Voltar para o índice</a>
+        </form>
+    </div>
+</body>
+</html>

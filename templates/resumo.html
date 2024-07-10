@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Resumo das Anotações</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .resumo-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #000;
+            border-radius: 8px;
+            color: #fff;
+        }
+
+        h2 {
+            color: #ff0000;
+            margin-bottom: 15px;
+        }
+
+        .resumo-coluna {
+            margin-bottom: 20px;
+        }
+
+        .resumo-coluna h3 {
+            margin-top: 0;
+        }
+
+        .resumo-coluna ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .resumo-coluna ul li {
+            background: #333;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+
+        .resumo-coluna ul li:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container resumo-container">
+        <h1>Resumo das Anotações</h1>
+        
+        <div class="resumo-coluna">
+            <h2>Temas</h2>
+            <ul>
+            {% for tema in temas %}
+                <li>{{ tema }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        
+        <div class="resumo-coluna">
+            <h2>Passagens Bíblicas por Livro</h2>
+            {% for livro, passagens in passagens_biblicas.items() %}
+                <h3>{{ livro }}</h3>
+                <ul>
+                {% for passagem in passagens %}
+                    <li>{{ passagem }}</li>
+                {% endfor %}
+                </ul>
+            {% endfor %}
+        </div>
+        
+        <div class="resumo-coluna">
+            <h2>Semanas de Culto</h2>
+            <ul>
+            {% for semana in semanas %}
+                <li>{{ semana }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        
+        <a class="btn" href="{{ url_for('index') }}"><i class="fas fa-arrow-left icon"></i> Voltar para Anotações</a>
+    </div>
+</body>
+</html>

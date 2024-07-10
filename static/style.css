@@ -1,41 +1,47 @@
 body {
     font-family: Arial, sans-serif;
     background: url("/static/cross_background.jpg") no-repeat center center fixed;
-    background-size: cover; /* Faz com que a imagem cubra toda a tela */
-    background-attachment: fixed; /* Mantém a imagem fixa na tela durante o rolar */
-    background-position: center center; /* Centraliza a imagem */
+    background-size: cover;
     color: #fff;
     text-align: center;
-    margin: 0; /* Remove a margem padrão do body */
-    height: 100vh; /* Garante que o body tenha a altura total da tela */
-    overflow: hidden; /* Remove a barra de rolagem, se necessário */
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
 }
 
 .container {
-    background: rgba(0, 0, 0, 0.8);
+    max-width: 800px;
+    margin: 20px auto;
     padding: 20px;
-    border-radius: 10px;
-    max-width: 600px;
-    margin: auto;
-    margin-top: 50px;
+    background: #000; /* Sem transparência */
+    border-radius: 8px;
 }
 
 h1 {
-    color: #ff0000;
+    color: #ff0000; /* Vermelho para o título */
+    margin-bottom: 20px;
 }
 
 label {
-    color: #ff0000;
+    color: #ff0000; /* Vermelho para o texto das labels */
     display: block;
     margin-top: 10px;
+    text-align: left;
 }
 
 input, textarea {
-    width: 100%;
+    width: calc(100% - 22px); /* Para considerar o padding e border */
     padding: 10px;
     margin-top: 5px;
-    border: none;
+    border: 1px solid #ff0000;
     border-radius: 5px;
+    background: #fff; /* Branco para o fundo dos campos */
+    color: #000; /* Preto para o texto */
+}
+
+textarea {
+    height: 150px; /* Altura maior para os campos de texto */
+    resize: vertical; /* Permite redimensionar verticalmente */
 }
 
 .btn {
@@ -53,27 +59,58 @@ input, textarea {
     background: #cc0000;
 }
 
+.btn-delete {
+    background: #ff0000; /* Cor de fundo vermelha */
+    color: #fff; /* Texto branco */
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.btn-delete:hover {
+    background: #cc0000; /* Cor de fundo ao passar o mouse */
+}
+
+.btn-edit {
+    background: #00aaff; /* Cor azul para o botão de edição */
+    color: #fff; /* Texto branco */
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+    text-decoration: none; /* Remove sublinhado do link */
+}
+
+.btn-edit:hover {
+    background: #0077aa; /* Cor azul escuro ao passar o mouse */
+}
+
 .anotacoes-lista {
     list-style: none;
     padding: 0;
 }
 
 .anotacao-item {
-    background: rgba(255, 0, 0, 0.1);
-    padding: 10px;
+    display: flex;
+    justify-content: space-between; /* Alinha o conteúdo do item e o botão */
+    align-items: flex-start;
+    background: #333; /* Fundo preto */
+    color: #fff; /* Texto branco */
+    padding: 15px;
     margin-top: 10px;
     border-radius: 5px;
 }
 
-.btn-delete {
-    background: #ff0000;
-    color: #fff;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+.anotacao-info {
+    flex: 1; /* Faz com que o conteúdo ocupe o espaço disponível */
 }
 
-.btn-delete:hover {
-    background: #cc0000;
+.icon {
+    margin-right: 8px; /* Espaço entre o ícone e o texto */
+    font-size: 16px; /* Tamanho do ícone */
 }

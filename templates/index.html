@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <title>Anotações dos Cultos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <script>
         function confirmarDelecao(event) {
-            if (!confirm("Você tem certeza que deseja deletar esta anotação?")) {
-                event.preventDefault();
+            if (!confirm('Tem certeza de que deseja excluir esta anotação?')) {
+                event.preventDefault(); // Evita a submissão do formulário
             }
         }
     </script>
@@ -15,22 +17,26 @@
 <body>
     <div class="container">
         <h1>Anotações dos Cultos</h1>
-        <a class="btn" href="{{ url_for('adicionar') }}">Adicionar Nova Anotação</a>
+        <a class="btn" href="{{ url_for('adicionar') }}"><i class="fas fa-plus icon"></i> Adicionar Nova Anotação</a>
+        <a class="btn" href="{{ url_for('resumo') }}"><i class="fas fa-chart-pie icon"></i> Ver Resumo das Anotações</a>
         <ul class="anotacoes-lista">
         {% for index, anotacao in enumerate(anotacoes) %}
             <li class="anotacao-item">
-                <strong>Data:</strong> {{ anotacao.data }}<br>
-                <strong>Tema:</strong> {{ anotacao.tema }}<br>
-                <strong>Passagem Bíblica:</strong> {{ anotacao.passagem_biblica }}<br>
-                <strong>Anotações do Culto:</strong> {{ anotacao.anotacoes_culto }}<br>
-                <strong>Devocional:</strong> {{ anotacao.devocional }}<br>
-                <form action="{{ url_for('deletar', index=index) }}" method="post" style="display:inline;" onsubmit="confirmarDelecao(event)">
-                    <button type="submit" class="btn-delete">Deletar</button>
+                <div class="anotacao-info">
+                    <strong><i class="fas fa-calendar icon"></i>Data:</strong> {{ anotacao.data }}<br>
+                    <strong><i class="fas fa-tag icon"></i>Tema:</strong> {{ anotacao.tema }}<br>
+                    <strong><i class="fas fa-book icon"></i>Passagem Bíblica:</strong> {{ anotacao.passagem_biblica }}<br>
+                    <strong><i class="fas fa-notes-medical icon"></i>Anotações do Culto:</strong> {{ anotacao.anotacoes_culto }}<br>
+                    <strong><i class="fas fa-clipboard-list icon"></i>Devocional:</strong> {{ anotacao.devocional }}<br>
+                </div>
+                <form action="{{ url_for('deletar', index=index) }}" method="post" class="delete-form" onsubmit="confirmarDelecao(event)">
+                    <button type="submit" class="btn-delete"><i class="fas fa-trash icon"></i></button>
                 </form>
+                <a class="btn-edit" href="{{ url_for('editar', index=index) }}"><i class="fas fa-edit icon"></i></a>
             </li>
         {% endfor %}
         </ul>
-        <a class="btn" href="{{ url_for('sair') }}">Sair</a>
+        <a class="btn" href="{{ url_for('sair') }}"><i class="fas fa-sign-out-alt icon"></i> Sair</a>
     </div>
 </body>
 </html>

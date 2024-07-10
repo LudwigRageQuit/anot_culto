@@ -1,8 +1,8 @@
+from flask import Flask, render_template, request, redirect, url_for, abort
 import json
 import os
 import shutil
 import atexit
-from flask import Flask, render_template, request, redirect, url_for, abort
 from dotenv import load_dotenv
 import dropbox
 import logging
@@ -22,11 +22,7 @@ dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
 # Arquivo JSON onde as anotações serão armazenadas
 ANOTACOES_FILE = "anotacoes_culto.json"
 DROPBOX_FILE_PATH = '/anotacoes_culto.json'
-
-# Diretório de backups
 BACKUP_DIR = "backups"
-if not os.path.exists(BACKUP_DIR):
-    os.makedirs(BACKUP_DIR)
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
@@ -46,6 +42,27 @@ def download_from_dropbox(dropbox_path, local_file_path):
         logging.info("Arquivo baixado com sucesso do Dropbox.")
     except Exception as e:
         logging.error(f"Erro ao baixar o arquivo do Dropbox: {e}")
+
+def obter_metadata_dropbox(caminho_arquivo):
+    try:
+        metadata = dbx.files_get_metadata(caminho_arquivo)
+        return metadata.server_modified
+    except dropbox.exceptions.ApiError as e:
+        logging.error(f"Erro ao obter metadata do Dropbox: {e}")
+        return None
+
+def verificar_e_baixar_arquivo():
+    timestamp_dropbox = obter_metadata_dropbox(DROPBOX_FILE_PATH)
+    if timestamp_dropbox is None:
+        return
+
+    if os.path.exists(ANOTACOES_FILE):
+        timestamp_local = datetime.fromtimestamp(os.path.getmtime(ANOTACOES_FILE))
+        if timestamp_dropbox <= timestamp_local:
+            logging.info("O arquivo local está atualizado com a versão do Dropbox. Nenhum download necessário.")
+            return
+
+    download_from_dropbox(DROPBOX_FILE_PATH, ANOTACOES_FILE)
 
 # Carregar anotações de um arquivo JSON
 def carregar_anotacoes():
@@ -67,8 +84,10 @@ def salvar_anotacoes(anotacoes):
     except IOError:
         logging.error("Erro ao salvar o arquivo JSON.")
 
-# Criar um backup do arquivo JSON
+# Criar um backup do arquivo JSON na pasta de backups
 def criar_backup():
+    if not os.path.exists(BACKUP_DIR):
+        os.makedirs(BACKUP_DIR)
     data_hora = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_file = os.path.join(BACKUP_DIR, f"anotacoes_culto_backup_{data_hora}.json")
     try:
@@ -84,6 +103,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
+    verificar_e_baixar_arquivo()
     anotacoes = carregar_anotacoes()
     return render_template('index.html', anotacoes=anotacoes, enumerate=enumerate)
 
@@ -121,6 +141,43 @@ def adicionar():
     
     return render_template('adicionar.html')
 
+@app.route('/editar/<int:index>', methods=['GET', 'POST'])
+def editar(index):
+    anotacoes = carregar_anotacoes()
+    if 0 <= index < len(anotacoes):
+        if request.method == 'POST':
+            data = request.form.get('data', '').strip()
+            tema = request.form.get('tema', '').strip()
+            passagem_biblica = request.form.get('passagem_biblica', '').strip()
+            anotacoes_culto = request.form.get('anotacoes_culto', '').strip()
+            devocional = request.form.get('devocional', '').strip()
+
+            # Validação dos dados
+            if not (data and tema and passagem_biblica and anotacoes_culto and devocional):
+                return "Todos os campos são obrigatórios!", 400
+
+            # Verificar formato da data (simples)
+            import re
+            if not re.match(r"\d{2}/\d{2}/\d{4}", data):
+                return "Formato de data inválido. Use DD/MM/AAAA.", 400
+
+            anotacao = {
+                "data": data,
+                "tema": tema,
+                "passagem_biblica": passagem_biblica,
+                "anotacoes_culto": anotacoes_culto,
+                "devocional": devocional
+            }
+
+            anotacoes[index] = anotacao
+            salvar_anotacoes(anotacoes)
+            return redirect(url_for('index'))
+        
+        anotacao = anotacoes[index]
+        return render_template('editar.html', index=index, anotacao=anotacao)
+    else:
+        abort(404)
+
 @app.route('/deletar/<int:index>', methods=['POST'])
 def deletar(index):
     anotacoes = carregar_anotacoes()
@@ -133,88 +190,27 @@ def deletar(index):
         abort(404)
     return redirect(url_for('index'))
 
-def cruz_ascii():
-    cruz = """
-      +     
-      |     
-  +---+---+
-      |     
-      |     
-    """
-    return cruz
+@app.route('/resumo')
+def resumo():
+    anotacoes = carregar_anotacoes()
+    temas = set()
+    passagens_biblicas = {}
+    semanas = set()
+
+    for anotacao in anotacoes:
+        temas.add(anotacao['tema'])
+        passagem = anotacao['passagem_biblica']
+        livro = passagem.split()[0]  # Assumindo o livro é a primeira palavra
+        if livro not in passagens_biblicas:
+            passagens_biblicas[livro] = []
+        passagens_biblicas[livro].append(passagem)
+        semanas.add(anotacao['data'])
+
+    return render_template('resumo.html', temas=list(temas), passagens_biblicas=passagens_biblicas, semanas=list(semanas))
 
 @app.route('/sair')
 def sair():
-    cruz = cruz_ascii()
-    mensagem = "Deus primeiro me amou!"
-    return render_template('sair.html', cruz=cruz, mensagem=mensagem)
-
-def cli_adicionar(data, tema, passagem_biblica, anotacoes_culto, devocional):
-    if not (data and tema and passagem_biblica and anotacoes_culto and devocional):
-        print("Todos os campos são obrigatórios.")
-        return
-
-    import re
-    if not re.match(r"\d{2}/\d{2}/\d{4}", data):
-        print("Formato de data inválido. Use DD/MM/AAAA.")
-        return
-
-    anotacao = {
-        "data": data,
-        "tema": tema,
-        "passagem_biblica": passagem_biblica,
-        "anotacoes_culto": anotacoes_culto,
-        "devocional": devocional
-    }
-    
-    anotacoes = carregar_anotacoes()
-    anotacoes.append(anotacao)
-    salvar_anotacoes(anotacoes)
-    print("Anotação adicionada com sucesso.")
-
-def cli_listar():
-    anotacoes = carregar_anotacoes()
-    if not anotacoes:
-        print("Nenhuma anotação encontrada.")
-        return
-    for idx, anotacao in enumerate(anotacoes):
-        print(f"Anotação {idx + 1}:")
-        print(f"  Data: {anotacao['data']}")
-        print(f"  Tema: {anotacao['tema']}")
-        print(f"  Passagem Bíblica: {anotacao['passagem_biblica']}")
-        print(f"  Anotações do Culto: {anotacao['anotacoes_culto']}")
-        print(f"  Devocional: {anotacao['devocional']}\n")
-
-def cli_deletar(index):
-    anotacoes = carregar_anotacoes()
-    if 0 <= index < len(anotacoes):
-        anotacoes.pop(index)
-        salvar_anotacoes(anotacoes)
-        print("Anotação deletada com sucesso.")
-    else:
-        print("Índice inválido.")
-
-def main():
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Gerenciador de Anotações de Culto')
-    parser.add_argument('--start', action='store_true', help='Inicia o servidor web')
-    parser.add_argument('--adicionar', nargs=5, metavar=('DATA', 'TEMA', 'PASSAGEM', 'ANOTACOES', 'DEVOCIONAL'), help='Adiciona uma nova anotação')
-    parser.add_argument('--listar', action='store_true', help='Lista todas as anotações')
-    parser.add_argument('--deletar', type=int, metavar='ÍNDICE', help='Deleta uma anotação pelo índice')
-
-    args = parser.parse_args()
-
-    if args.start:
-        app.run(debug=True)
-    elif args.adicionar:
-        cli_adicionar(*args.adicionar)
-    elif args.listar:
-        cli_listar()
-    elif args.deletar is not None:
-        cli_deletar(args.deletar)
-    else:
-        parser.print_help()
+    return render_template('sair.html')
 
 if __name__ == '__main__':
-    main()
+    app.run(debug=True)

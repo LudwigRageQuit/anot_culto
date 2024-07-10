@@ -4,24 +4,25 @@
     <meta charset="UTF-8">
     <title>Adicionar Anotação</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1>Adicionar Anotação</h1>
+        <h1>Adicionar Nova Anotação</h1>
         <form method="post">
-            <label for="data">Data (DD/MM/AAAA):</label><br>
-            <input type="text" id="data" name="data" required><br>
-            <label for="tema">Tema:</label><br>
-            <input type="text" id="tema" name="tema" required><br>
-            <label for="passagem_biblica">Passagem Bíblica:</label><br>
-            <input type="text" id="passagem_biblica" name="passagem_biblica" required><br>
-            <label for="anotacoes_culto">Anotações do Culto:</label><br>
-            <textarea id="anotacoes_culto" name="anotacoes_culto" required></textarea><br>
-            <label for="devocional">Seu devocional pós-culto:</label><br>
-            <textarea id="devocional" name="devocional" required></textarea><br>
-            <button type="submit" class="btn">Adicionar</button>
+            <label for="data"><i class="fas fa-calendar icon"></i> Data:</label>
+            <input type="text" id="data" name="data" placeholder="DD/MM/AAAA" required>
+            <label for="tema"><i class="fas fa-tag icon"></i> Tema:</label>
+            <input type="text" id="tema" name="tema" required>
+            <label for="passagem_biblica"><i class="fas fa-book icon"></i> Passagem Bíblica:</label>
+            <input type="text" id="passagem_biblica" name="passagem_biblica" required>
+            <label for="anotacoes_culto"><i class="fas fa-notes-medical icon"></i> Anotações do Culto:</label>
+            <textarea id="anotacoes_culto" name="anotacoes_culto" required></textarea>
+            <label for="devocional"><i class="fas fa-clipboard-list icon"></i> Devocional:</label>
+            <textarea id="devocional" name="devocional" required></textarea>
+            <button type="submit" class="btn"><i class="fas fa-save icon"></i> Salvar</button>
         </form>
-        <a class="btn" href="{{ url_for('index') }}">Voltar</a>
+        <a class="btn" href="{{ url_for('index') }}"><i class="fas fa-home icon"></i> Voltar</a>
     </div>
 </body>
 </html>
