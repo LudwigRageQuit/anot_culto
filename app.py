@@ -23,6 +23,11 @@ dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
 ANOTACOES_FILE = "anotacoes_culto.json"
 DROPBOX_FILE_PATH = '/anotacoes_culto.json'
 
+# Diretório de backups
+BACKUP_DIR = "backups"
+if not os.path.exists(BACKUP_DIR):
+    os.makedirs(BACKUP_DIR)
+
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
 
@@ -65,7 +70,7 @@ def salvar_anotacoes(anotacoes):
 # Criar um backup do arquivo JSON
 def criar_backup():
     data_hora = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_file = f"anotacoes_culto_backup_{data_hora}.json"
+    backup_file = os.path.join(BACKUP_DIR, f"anotacoes_culto_backup_{data_hora}.json")
     try:
         shutil.copy(ANOTACOES_FILE, backup_file)
         logging.info(f"Backup criado com sucesso: {backup_file}")
