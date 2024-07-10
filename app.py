@@ -1,57 +1,51 @@
-import argparse
-import os
 import json
+import os
 import shutil
-import logging
 import atexit
-from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, abort
 from dotenv import load_dotenv
 import dropbox
+import logging
+from datetime import datetime
 
 # Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
 
-# Obter o token do Dropbox da variável de ambiente
+# Obter o token de acesso do Dropbox a partir das variáveis de ambiente
 DROPBOX_ACCESS_TOKEN = os.getenv('DROPBOX_ACCESS_TOKEN')
-
 if not DROPBOX_ACCESS_TOKEN:
     raise ValueError("O token de acesso do Dropbox não está definido. Verifique a configuração.")
 
-# Inicializar cliente Dropbox
+# Inicializar o cliente do Dropbox
 dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
-
-app = Flask(__name__)
 
 # Arquivo JSON onde as anotações serão armazenadas
 ANOTACOES_FILE = "anotacoes_culto.json"
+DROPBOX_FILE_PATH = '/anotacoes_culto.json'
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
 
-# Função para baixar o arquivo JSON do Dropbox
-def baixar_arquivo_do_dropbox():
+# Funções de sincronização com Dropbox
+def upload_to_dropbox(local_file_path, dropbox_path):
     try:
-        metadata, res = dbx.files_download(path='/anotacoes_culto.json')
-        with open(ANOTACOES_FILE, 'wb') as f:
-            f.write(res.content)
-        logging.info("Arquivo JSON baixado com sucesso do Dropbox.")
-    except dropbox.exceptions.ApiError as e:
-        logging.error(f"Erro ao baixar o arquivo do Dropbox: {e}")
-
-# Função para enviar o arquivo JSON para o Dropbox
-def enviar_arquivo_para_dropbox():
-    try:
-        with open(ANOTACOES_FILE, 'rb') as f:
-            dbx.files_upload(f.read(), path='/anotacoes_culto.json', mode=dropbox.files.WriteMode.overwrite)
-        logging.info("Arquivo JSON enviado para o Dropbox com sucesso.")
-    except dropbox.exceptions.ApiError as e:
+        with open(local_file_path, 'rb') as f:
+            dbx.files_upload(f.read(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
+        logging.info("Arquivo enviado com sucesso para o Dropbox.")
+    except Exception as e:
         logging.error(f"Erro ao enviar o arquivo para o Dropbox: {e}")
 
-# Função para carregar anotações
+def download_from_dropbox(dropbox_path, local_file_path):
+    try:
+        dbx.files_download_to_file(local_file_path, dropbox_path)
+        logging.info("Arquivo baixado com sucesso do Dropbox.")
+    except Exception as e:
+        logging.error(f"Erro ao baixar o arquivo do Dropbox: {e}")
+
+# Carregar anotações de um arquivo JSON
 def carregar_anotacoes():
     if not os.path.exists(ANOTACOES_FILE):
-        return []
+        download_from_dropbox(DROPBOX_FILE_PATH, ANOTACOES_FILE)
     try:
         with open(ANOTACOES_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -59,17 +53,16 @@ def carregar_anotacoes():
         logging.error("Erro ao decodificar o arquivo JSON.")
         return []
 
-# Função para salvar anotações
+# Salvar anotações em um arquivo JSON
 def salvar_anotacoes(anotacoes):
     try:
         with open(ANOTACOES_FILE, "w", encoding="utf-8") as f:
             json.dump(anotacoes, f, ensure_ascii=False, indent=4)
-        # Enviar o arquivo atualizado para o Dropbox
-        enviar_arquivo_para_dropbox()
+        upload_to_dropbox(ANOTACOES_FILE, DROPBOX_FILE_PATH)
     except IOError:
         logging.error("Erro ao salvar o arquivo JSON.")
 
-# Função para criar backup do arquivo JSON
+# Criar um backup do arquivo JSON
 def criar_backup():
     data_hora = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_file = f"anotacoes_culto_backup_{data_hora}.json"
@@ -82,10 +75,7 @@ def criar_backup():
 # Registrar função de finalização para criar backup
 atexit.register(criar_backup)
 
-@app.before_first_request
-def sincronizar_arquivo():
-    """Baixar o arquivo do Dropbox antes de processar a primeira solicitação."""
-    baixar_arquivo_do_dropbox()
+app = Flask(__name__)
 
 @app.route('/')
 def index():
@@ -200,6 +190,8 @@ def cli_deletar(index):
         print("Índice inválido.")
 
 def main():
+    import argparse
+
     parser = argparse.ArgumentParser(description='Gerenciador de Anotações de Culto')
     parser.add_argument('--start', action='store_true', help='Inicia o servidor web')
     parser.add_argument('--adicionar', nargs=5, metavar=('DATA', 'TEMA', 'PASSAGEM', 'ANOTACOES', 'DEVOCIONAL'), help='Adiciona uma nova anotação')
